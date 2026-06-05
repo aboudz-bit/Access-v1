@@ -3,6 +3,7 @@ import { useGetInterpreterProfile, useUpdateInterpreterStatus, useListInterprete
 import { useAuth } from "@/contexts/auth-context";
 import { useI18n } from "@/contexts/i18n-context";
 import { LanguageToggle } from "@/components/language-toggle";
+import { Flag } from "@/components/flag";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { LogOut, Clock } from "lucide-react";
@@ -82,7 +83,7 @@ export default function InterpreterDashboard() {
               <div className="flex flex-wrap gap-2">
                 {profile?.languages.map(language => (
                   <Badge key={language.id} variant="secondary" className="px-3 py-1.5 text-sm">
-                    {language.flagEmoji} {lang === "ar" ? language.nameAr : language.name}
+                    <Flag emoji={language.flagEmoji} className="mr-1.5" /> {lang === "ar" ? language.nameAr : language.name}
                   </Badge>
                 ))}
               </div>
@@ -106,8 +107,8 @@ export default function InterpreterDashboard() {
                     {pastSessions.map(session => (
                       <div key={session.id} className="p-4 px-6 flex items-center justify-between hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-lg">
-                            {session.language.flagEmoji}
+                          <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-lg overflow-hidden">
+                            <Flag emoji={session.language.flagEmoji} className="text-lg" />
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{session.userName}</p>

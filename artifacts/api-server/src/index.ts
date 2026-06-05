@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import app from "./app";
-import { attachSignaling } from "./lib/signaling";
+import { attachSignaling, startSessionSweeper } from "./lib/signaling";
 import { logger } from "./lib/logger";
 
 const rawPort = process.env["PORT"];
@@ -19,6 +19,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 const server = createServer(app);
 attachSignaling(server);
+startSessionSweeper();
 
 server.listen(port, () => {
   logger.info({ port }, "Server listening");

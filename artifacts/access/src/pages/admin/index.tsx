@@ -23,6 +23,7 @@ import type { Interpreter, Language, SessionStatus, InterpreterStatus } from "@w
 import { useAuth } from "@/contexts/auth-context";
 import { useI18n } from "@/contexts/i18n-context";
 import { LanguageToggle } from "@/components/language-toggle";
+import { Flag } from "@/components/flag";
 import { Button } from "@/components/ui/button";
 import { LogOut, Users, Video, CheckCircle2, ShieldCheck, Plus, Pencil, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -356,7 +357,7 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4">{session.interpreterName || '-'}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <span>{session.language.flagEmoji}</span>
+                            <Flag emoji={session.language.flagEmoji} className="text-base" />
                             <span>{langName(session.language)}</span>
                           </div>
                         </td>
@@ -413,7 +414,7 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1">
                             {inter.languages.map((l) => (
-                              <Badge key={l.id} variant="secondary" className="text-xs">{l.flagEmoji} {langName(l)}</Badge>
+                              <Badge key={l.id} variant="secondary" className="text-xs"><Flag emoji={l.flagEmoji} className="mr-1" /> {langName(l)}</Badge>
                             ))}
                           </div>
                         </td>
@@ -510,7 +511,7 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-border">
                     {languages?.map((l) => (
                       <tr key={l.id} className="hover:bg-muted/30">
-                        <td className="px-6 py-4 text-2xl">{l.flagEmoji}</td>
+                        <td className="px-6 py-4"><Flag emoji={l.flagEmoji} className="text-2xl" /></td>
                         <td className="px-6 py-4 font-mono text-muted-foreground">{l.code}</td>
                         <td className="px-6 py-4">{l.name}</td>
                         <td className="px-6 py-4">{l.nameAr}</td>
@@ -601,7 +602,7 @@ export default function AdminDashboard() {
                       onClick={() => toggleInterpreterFormLanguage(l.id)}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${selected ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:border-primary/50"}`}
                     >
-                      {l.flagEmoji} {langName(l)}
+                      <Flag emoji={l.flagEmoji} className="mr-1" /> {langName(l)}
                     </button>
                   );
                 })}
@@ -632,7 +633,7 @@ export default function AdminDashboard() {
                   onClick={() => toggleLangsFormLanguage(l.id)}
                   className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${selected ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:border-primary/50"}`}
                 >
-                  {l.flagEmoji} {langName(l)}
+                  <Flag emoji={l.flagEmoji} className="mr-1" /> {langName(l)}
                 </button>
               );
             })}
