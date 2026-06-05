@@ -74,6 +74,13 @@ export interface Language {
   flagEmoji: string;
 }
 
+export interface LanguageInput {
+  code: string;
+  name: string;
+  nameAr: string;
+  flagEmoji: string;
+}
+
 export interface InterpreterProfile {
   id: number;
   name: string;

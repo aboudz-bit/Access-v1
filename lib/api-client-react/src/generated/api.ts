@@ -29,6 +29,7 @@ import type {
   InterpreterProfile,
   InterpreterStatusBody,
   Language,
+  LanguageInput,
   ListAdminSessionsParams,
   LoginRequest,
   RespondBody,
@@ -1454,6 +1455,219 @@ export const useSetInterpreterLanguages = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSetInterpreterLanguagesMutationOptions(options));
+    }
+
+export const getCreateLanguageUrl = () => {
+
+
+
+
+  return `/api/admin/languages`
+}
+
+/**
+ * @summary Create a language
+ */
+export const createLanguage = async (languageInput: LanguageInput, options?: RequestInit): Promise<Language> => {
+
+  return customFetch<Language>(getCreateLanguageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      languageInput,)
+  }
+);}
+
+
+
+
+export const getCreateLanguageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLanguage>>, TError,{data: BodyType<LanguageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLanguage>>, TError,{data: BodyType<LanguageInput>}, TContext> => {
+
+const mutationKey = ['createLanguage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLanguage>>, {data: BodyType<LanguageInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createLanguage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLanguageMutationResult = NonNullable<Awaited<ReturnType<typeof createLanguage>>>
+    export type CreateLanguageMutationBody = BodyType<LanguageInput>
+    export type CreateLanguageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a language
+ */
+export const useCreateLanguage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLanguage>>, TError,{data: BodyType<LanguageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLanguage>>,
+        TError,
+        {data: BodyType<LanguageInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLanguageMutationOptions(options));
+    }
+
+export const getUpdateLanguageUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/languages/${id}`
+}
+
+/**
+ * @summary Update a language
+ */
+export const updateLanguage = async (id: number,
+    languageInput: LanguageInput, options?: RequestInit): Promise<Language> => {
+
+  return customFetch<Language>(getUpdateLanguageUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      languageInput,)
+  }
+);}
+
+
+
+
+export const getUpdateLanguageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLanguage>>, TError,{id: number;data: BodyType<LanguageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLanguage>>, TError,{id: number;data: BodyType<LanguageInput>}, TContext> => {
+
+const mutationKey = ['updateLanguage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLanguage>>, {id: number;data: BodyType<LanguageInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateLanguage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLanguageMutationResult = NonNullable<Awaited<ReturnType<typeof updateLanguage>>>
+    export type UpdateLanguageMutationBody = BodyType<LanguageInput>
+    export type UpdateLanguageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a language
+ */
+export const useUpdateLanguage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLanguage>>, TError,{id: number;data: BodyType<LanguageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLanguage>>,
+        TError,
+        {id: number;data: BodyType<LanguageInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateLanguageMutationOptions(options));
+    }
+
+export const getDeleteLanguageUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/languages/${id}`
+}
+
+/**
+ * @summary Delete a language
+ */
+export const deleteLanguage = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteLanguageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLanguageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLanguage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLanguage>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteLanguage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLanguage>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteLanguage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLanguageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLanguage>>>
+
+    export type DeleteLanguageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a language
+ */
+export const useDeleteLanguage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLanguage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLanguage>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLanguageMutationOptions(options));
     }
 
 export const getListAdminSessionsUrl = (params?: ListAdminSessionsParams,) => {

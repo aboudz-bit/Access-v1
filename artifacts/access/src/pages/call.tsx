@@ -5,12 +5,14 @@ import { setRemoteVideoEl, setLocalStream, startWebRTC, stopWebRTC } from "@/lib
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
 
 export default function Call() {
   const params = useParams();
   const id = Number(params.id);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { t, lang } = useI18n();
   const [micEnabled, setMicEnabled] = useState(true);
   const [cameraEnabled, setCameraEnabled] = useState(true);
   
@@ -112,7 +114,7 @@ export default function Call() {
         {session && (
           <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-white/90 text-sm font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            {session.language.nameAr}
+            {lang === "ar" ? session.language.nameAr : session.language.name}
           </div>
         )}
       </header>
@@ -131,7 +133,7 @@ export default function Call() {
         {/* We can use CSS to style it, or show a fallback if remoteVideoRef.current.srcObject is null, but we don't track that in state. Just a simple calm overlay. */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-white/50 bg-black/40 backdrop-blur-[2px] transition-opacity [&:has(+_video[srcObject])]:opacity-0">
            <Loader2 className="w-10 h-10 animate-spin mb-4 text-white/70" />
-           <p className="text-lg font-medium">متصل بالمترجم...</p>
+           <p className="text-lg font-medium">{t("call.connecting")}</p>
         </div>
         
         {/* Local Video PIP */}

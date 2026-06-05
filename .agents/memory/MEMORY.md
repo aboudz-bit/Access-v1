@@ -1,1 +1,2 @@
-- [orval query hooks require queryKey](orval-query-options.md) — generated React Query hooks in @workspace/api-client-react need explicit queryKey at call sites or tsc fails (dev server won't catch it).
+- [orval query hooks need queryKey](orval-query-options.md) — generated React Query hooks type options.query as non-partial, so queryKey is required at every call site.
+- [drizzle wraps pg errors](drizzle-pg-error-wrapping.md) — Postgres SQLSTATE code (e.g. 23505) lives on err.cause, not err; check both when handling constraint violations.

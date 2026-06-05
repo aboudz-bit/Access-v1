@@ -1,5 +1,7 @@
 import { useGetInterpreterProfile, useUpdateInterpreterStatus, useListInterpreterSessions, useRespondToSession, getListInterpreterSessionsQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
+import { LanguageToggle } from "@/components/language-toggle";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { LogOut, Check, X, Clock, Video } from "lucide-react";
@@ -9,6 +11,7 @@ import { Label } from "@/components/ui/label";
 
 export default function InterpreterDashboard() {
   const { logout } = useAuth();
+  const { t, lang } = useI18n();
   const [, setLocation] = useLocation();
 
   const { data: profile } = useGetInterpreterProfile();
@@ -44,7 +47,7 @@ export default function InterpreterDashboard() {
       <header className="flex items-center justify-between p-4 border-b border-border/40 bg-card/50 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <img src="/access-logo.png" alt="Access Logo" className="h-8 object-contain" />
-          <Badge variant="outline" className="hidden sm:inline-flex">لوحة المترجم</Badge>
+          <Badge variant="outline" className="hidden sm:inline-flex">{t("interpreter.badge")}</Badge>
         </div>
         <div className="flex items-center gap-4">
           {profile && (
@@ -56,10 +59,11 @@ export default function InterpreterDashboard() {
                 disabled={updateStatus.isPending || profile.status === "busy"}
               />
               <Label htmlFor="status" className="font-medium">
-                {profile.status === "available" ? "متاح" : profile.status === "busy" ? "مشغول" : "غير متاح"}
+                {profile.status === "available" ? t("status.available") : profile.status === "busy" ? t("status.busy") : t("status.offline")}
               </Label>
             </div>
           )}
+          <LanguageToggle />
           <Button variant="ghost" size="icon" onClick={logout} className="text-muted-foreground hover:text-foreground">
             <LogOut className="w-5 h-5" />
           </Button>
@@ -76,8 +80,8 @@ export default function InterpreterDashboard() {
                   {pendingSession.language.flagEmoji}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-1">طلب ترجمة جديد</h2>
-                  <p className="text-muted-foreground text-lg">من: {pendingSession.userName} • لغة {pendingSession.language.nameAr}</p>
+                  <h2 className="text-2xl font-bold text-foreground mb-1">{t("interpreter.newRequest")}</h2>
+                  <p className="text-muted-foreground text-lg">{t("interpreter.fromPrefix")} {pendingSession.userName} • {t("connecting.languagePrefix")} {lang === "ar" ? pendingSession.language.nameAr : pendingSession.language.name}</p>
                 </div>
               </div>
               <div className="flex gap-3 w-full md:w-auto">
@@ -89,7 +93,7 @@ export default function InterpreterDashboard() {
                   disabled={respondSession.isPending}
                 >
                   <X className="w-5 h-5 ml-2" />
-                  رفض
+                  {t("common.decline")}
                 </Button>
                 <Button 
                   size="lg" 
@@ -98,7 +102,7 @@ export default function InterpreterDashboard() {
                   disabled={respondSession.isPending}
                 >
                   <Check className="w-5 h-5 ml-2" />
-                  قبول
+                  {t("common.accept")}
                 </Button>
               </div>
             </div>
@@ -109,11 +113,11 @@ export default function InterpreterDashboard() {
           {/* Profile Sidebar */}
           <div className="md:col-span-1 space-y-6">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold mb-4">لغاتي</h3>
+              <h3 className="text-lg font-bold mb-4">{t("interpreter.myLanguages")}</h3>
               <div className="flex flex-wrap gap-2">
-                {profile?.languages.map(lang => (
-                  <Badge key={lang.id} variant="secondary" className="px-3 py-1.5 text-sm">
-                    {lang.flagEmoji} {lang.nameAr}
+                {profile?.languages.map(language => (
+                  <Badge key={language.id} variant="secondary" className="px-3 py-1.5 text-sm">
+                    {language.flagEmoji} {lang === "ar" ? language.nameAr : language.name}
                   </Badge>
                 ))}
               </div>
@@ -124,13 +128,13 @@ export default function InterpreterDashboard() {
           <div className="md:col-span-2">
             <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
               <div className="p-6 border-b border-border">
-                <h3 className="text-lg font-bold">الجلسات السابقة</h3>
+                <h3 className="text-lg font-bold">{t("interpreter.pastSessions")}</h3>
               </div>
               <div className="p-0">
                 {pastSessions.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
                     <Clock className="w-12 h-12 mb-3 opacity-20" />
-                    <p>لا يوجد جلسات سابقة بعد</p>
+                    <p>{t("interpreter.noPastSessions")}</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
@@ -143,12 +147,12 @@ export default function InterpreterDashboard() {
                           <div>
                             <p className="font-medium text-foreground">{session.userName}</p>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(session.createdAt).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(session.createdAt).toLocaleDateString(lang === "ar" ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         </div>
                         <Badge variant={session.status === 'ended' ? 'outline' : 'secondary'} className={session.status === 'ended' ? 'text-green-600 border-green-600/30' : ''}>
-                          {session.status === 'ended' ? 'مكتمل' : session.status === 'active' ? 'نشط' : 'مرفوض'}
+                          {session.status === 'ended' ? t("sessionStatus.ended") : session.status === 'active' ? t("sessionStatus.active") : t("sessionStatus.declined")}
                         </Badge>
                       </div>
                     ))}

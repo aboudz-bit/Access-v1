@@ -3,6 +3,7 @@ import {
   db,
   usersTable,
   sessionsTable,
+  languagesTable,
   interpreterLanguagesTable,
 } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -10,6 +11,7 @@ import { requireAuth, hashPassword } from "../lib/auth";
 import {
   toUser,
   toSession,
+  toLanguage,
   languagesForInterpreter,
 } from "../lib/mappers";
 
@@ -171,6 +173,104 @@ router.put("/admin/interpreters/:id/languages", requireAuth("admin"), async (req
     );
   }
   res.json(await buildInterpreter(interp.id, interp.name, interp.email, interp.status));
+});
+
+function isUniqueViolation(err: unknown): boolean {
+  const code = (e: unknown): string | undefined =>
+    typeof e === "object" && e !== null && "code" in e
+      ? (e as { code?: string }).code
+      : undefined;
+  const cause =
+    typeof err === "object" && err !== null && "cause" in err
+      ? (err as { cause?: unknown }).cause
+      : undefined;
+  return code(err) === "23505" || code(cause) === "23505";
+}
+
+router.post("/admin/languages", requireAuth("admin"), async (req, res) => {
+  const { code, name, nameAr, flagEmoji } = (req.body ?? {}) as {
+    code?: string;
+    name?: string;
+    nameAr?: string;
+    flagEmoji?: string;
+  };
+  if (!code || !name || !nameAr || !flagEmoji) {
+    res.status(400).json({ message: "Missing fields" });
+    return;
+  }
+  try {
+    const [created] = await db
+      .insert(languagesTable)
+      .values({ code: code.trim(), name, nameAr, flagEmoji })
+      .returning();
+    res.status(201).json(toLanguage(created!));
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ message: "Language code already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+
+router.put("/admin/languages/:id", requireAuth("admin"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  const { code, name, nameAr, flagEmoji } = (req.body ?? {}) as {
+    code?: string;
+    name?: string;
+    nameAr?: string;
+    flagEmoji?: string;
+  };
+  if (!code || !name || !nameAr || !flagEmoji) {
+    res.status(400).json({ message: "Missing fields" });
+    return;
+  }
+  try {
+    const [updated] = await db
+      .update(languagesTable)
+      .set({ code: code.trim(), name, nameAr, flagEmoji })
+      .where(eq(languagesTable.id, id))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ message: "Not found" });
+      return;
+    }
+    res.json(toLanguage(updated));
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ message: "Language code already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+
+router.delete("/admin/languages/:id", requireAuth("admin"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  const [{ count: sessionCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.languageId, id));
+  if (sessionCount > 0) {
+    res.status(409).json({
+      message:
+        "Cannot delete a language that is referenced by existing sessions",
+    });
+    return;
+  }
+  await db
+    .delete(interpreterLanguagesTable)
+    .where(eq(interpreterLanguagesTable.languageId, id));
+  await db.delete(languagesTable).where(eq(languagesTable.id, id));
+  res.status(204).end();
 });
 
 router.get("/admin/sessions", requireAuth("admin"), async (req, res) => {

@@ -16,6 +16,7 @@ export * from './interpreterProfile';
 export * from './interpreterStatus';
 export * from './interpreterStatusBody';
 export * from './language';
+export * from './languageInput';
 export * from './listAdminSessionsParams';
 export * from './loginRequest';
 export * from './respondAction';

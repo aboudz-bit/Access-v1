@@ -346,6 +346,48 @@ export const SetInterpreterLanguagesResponse = zod.object({
 
 
 /**
+ * @summary Create a language
+ */
+export const CreateLanguageBody = zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "nameAr": zod.string(),
+  "flagEmoji": zod.string()
+})
+
+
+/**
+ * @summary Update a language
+ */
+export const UpdateLanguageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateLanguageBody = zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "nameAr": zod.string(),
+  "flagEmoji": zod.string()
+})
+
+export const UpdateLanguageResponse = zod.object({
+  "id": zod.number(),
+  "code": zod.string(),
+  "name": zod.string(),
+  "nameAr": zod.string(),
+  "flagEmoji": zod.string()
+})
+
+
+/**
+ * @summary Delete a language
+ */
+export const DeleteLanguageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary List all sessions, optionally filtered by status
  */
 export const ListAdminSessionsQueryParams = zod.object({

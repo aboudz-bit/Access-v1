@@ -10,7 +10,7 @@ helper already defaults it via `queryOptions?.queryKey ?? get*QueryKey()`.
 
 **Why:** Without the generated config emitting partial options, omitting `queryKey`
 in a `{ query: { ... } }` block passes at runtime (vite/esbuild strip types) but
-fails `tsc --noEmit` with TS2741. The DESIGN subagent's pages hit this.
+fails `tsc --noEmit` with TS2741.
 
 **How to apply:** When using a generated hook with custom query options, always
 include `queryKey: get<Name>QueryKey(...args)` (the key helper is exported from
