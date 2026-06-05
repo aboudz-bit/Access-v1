@@ -5,6 +5,11 @@ let remoteStream: MediaStream | null = null;
 let pc: RTCPeerConnection | null = null;
 let ws: WebSocket | null = null;
 
+// Notified when the remote stream arrives (true) or the peer leaves (false),
+// so React can show/hide the "Connecting…" overlay reliably instead of relying
+// on fragile DOM/CSS detection of the video element's srcObject.
+let onRemoteChange: ((connected: boolean) => void) | null = null;
+
 function attachRemote() {
   if (remoteVideoEl && remoteStream) {
     remoteVideoEl.srcObject = remoteStream;
@@ -18,6 +23,12 @@ export function setRemoteVideoEl(el: HTMLVideoElement | null) {
 
 export function setLocalStream(stream: MediaStream | null) {
   localStream = stream;
+}
+
+export function setOnRemoteStreamChange(
+  cb: ((connected: boolean) => void) | null,
+) {
+  onRemoteChange = cb;
 }
 
 const ICE_SERVERS: RTCIceServer[] = [
@@ -43,6 +54,7 @@ export function startWebRTC(sessionId: number, role: string) {
   pc.ontrack = (e) => {
     remoteStream = e.streams[0] ?? null;
     attachRemote();
+    onRemoteChange?.(!!remoteStream);
   };
 
   pc.onicecandidate = (e) => {
@@ -58,13 +70,17 @@ export function startWebRTC(sessionId: number, role: string) {
   };
 
   ws.onmessage = async (ev) => {
-    if (!pc) return;
     let msg: any;
     try {
       msg = JSON.parse(ev.data);
     } catch {
       return;
     }
+    if (msg.type === "peer-left") {
+      onRemoteChange?.(false);
+      return;
+    }
+    if (!pc) return;
     try {
       if (msg.type === "ready" && isInitiator) {
         const offer = await pc.createOffer();

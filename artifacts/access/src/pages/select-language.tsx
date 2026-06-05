@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useI18n } from "@/contexts/i18n-context";
 import { LanguageToggle } from "@/components/language-toggle";
+import { Flag } from "@/components/flag";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogOut } from "lucide-react";
@@ -66,7 +67,7 @@ export default function SelectLanguage() {
                 className="group flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="text-5xl mb-4">{language.flagEmoji}</span>
+                <Flag emoji={language.flagEmoji} className="text-5xl mb-4" />
                 <span className="text-xl font-bold text-foreground mb-1">{lang === "ar" ? language.nameAr : language.name}</span>
                 <span className="text-sm text-muted-foreground">{lang === "ar" ? language.name : language.nameAr}</span>
               </button>

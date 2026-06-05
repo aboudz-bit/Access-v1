@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useGetSession, useEndSession, getGetSessionQueryKey } from "@workspace/api-client-react";
-import { setRemoteVideoEl, setLocalStream, startWebRTC, stopWebRTC } from "@/lib/webrtc-slot";
+import { setRemoteVideoEl, setLocalStream, startWebRTC, stopWebRTC, setOnRemoteStreamChange } from "@/lib/webrtc-slot";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
@@ -15,6 +15,7 @@ export default function Call() {
   const { t, lang } = useI18n();
   const [micEnabled, setMicEnabled] = useState(true);
   const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [remoteConnected, setRemoteConnected] = useState(false);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -39,7 +40,10 @@ export default function Call() {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
-    
+
+    setRemoteConnected(false);
+    setOnRemoteStreamChange(setRemoteConnected);
+
     if (remoteVideoRef.current) {
       setRemoteVideoEl(remoteVideoRef.current);
     }
@@ -64,6 +68,7 @@ export default function Call() {
     startMedia();
 
     return () => {
+      setOnRemoteStreamChange(null);
       stopWebRTC();
       setRemoteVideoEl(null);
       setLocalStream(null);
@@ -129,12 +134,15 @@ export default function Call() {
           playsInline 
         />
         
-        {/* Overlay when no remote video is flowing (we can't easily detect bytes flowing purely in react, but we rely on WebRTC setting srcObject) */}
-        {/* We can use CSS to style it, or show a fallback if remoteVideoRef.current.srcObject is null, but we don't track that in state. Just a simple calm overlay. */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-white/50 bg-black/40 backdrop-blur-[2px] transition-opacity [&:has(+_video[srcObject])]:opacity-0">
-           <Loader2 className="w-10 h-10 animate-spin mb-4 text-white/70" />
-           <p className="text-lg font-medium">{t("call.connecting")}</p>
-        </div>
+        {/* Shown only while waiting for the remote participant; hidden as soon
+            as the remote stream arrives (tracked in React state via the
+            webrtc-slot onRemoteStreamChange callback). */}
+        {!remoteConnected && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-white/50 bg-black/40 backdrop-blur-[2px]">
+            <Loader2 className="w-10 h-10 animate-spin mb-4 text-white/70" />
+            <p className="text-lg font-medium">{t("call.connecting")}</p>
+          </div>
+        )}
         
         {/* Local Video PIP */}
         <div className="absolute bottom-[100px] left-4 md:bottom-6 md:left-6 w-28 h-40 md:w-40 md:h-56 bg-zinc-800 rounded-xl overflow-hidden border border-white/20 shadow-2xl z-20 transition-transform hover:scale-105 cursor-pointer">

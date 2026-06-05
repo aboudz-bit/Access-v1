@@ -1,7 +1,7 @@
 import type { Server, IncomingMessage } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
 import { db, sessionsTable, usersTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import { AUTH_COOKIE, verifyToken } from "./auth";
 import { logger } from "./logger";
 
@@ -155,4 +155,103 @@ export function attachSignaling(server: Server): void {
       logger.info({ sessionId, role }, "ws disconnected");
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Session sweeper
+// ---------------------------------------------------------------------------
+// Safety net for sessions NOT cleaned up by the per-socket close handler above
+// — e.g. a hard browser/tab crash, a dropped connection, or a server restart
+// (which loses the in-memory room map entirely). It periodically ends `active`
+// sessions that have no live WebRTC room and are older than a configurable
+// timeout, and returns their interpreter to "available".
+//
+// A live, long-running call is never swept: there is no maximum call duration,
+// so any session with at least one connected peer is skipped.
+//
+// Configurable via env (milliseconds):
+//   SESSION_SWEEP_INTERVAL_MS  how often the sweeper runs       (default 30000)
+//   SESSION_ABANDON_TIMEOUT_MS how old an active+roomless session
+//                              must be before it is ended       (default 120000)
+const SWEEP_INTERVAL_MS = Number(
+  process.env["SESSION_SWEEP_INTERVAL_MS"] ?? 30_000,
+);
+const ABANDON_TIMEOUT_MS = Number(
+  process.env["SESSION_ABANDON_TIMEOUT_MS"] ?? 120_000,
+);
+
+function roomIsLive(sessionId: number): boolean {
+  const room = rooms.get(String(sessionId));
+  return !!room && (!!room.user || !!room.interpreter);
+}
+
+async function sweepAbandonedSessions(): Promise<void> {
+  const cutoff = new Date(Date.now() - ABANDON_TIMEOUT_MS);
+  let stale: Array<{ id: number; interpreterId: number | null }>;
+  try {
+    stale = await db
+      .select({
+        id: sessionsTable.id,
+        interpreterId: sessionsTable.interpreterId,
+      })
+      .from(sessionsTable)
+      .where(
+        and(
+          eq(sessionsTable.status, "active"),
+          lt(sessionsTable.createdAt, cutoff),
+        ),
+      );
+  } catch (err) {
+    logger.error({ err }, "session sweep query failed");
+    return;
+  }
+
+  for (const row of stale) {
+    // Skip sessions with a connected peer (legitimate ongoing call).
+    if (roomIsLive(row.id)) continue;
+    try {
+      const [ended] = await db
+        .update(sessionsTable)
+        .set({ status: "ended", endedAt: new Date() })
+        .where(
+          and(eq(sessionsTable.id, row.id), eq(sessionsTable.status, "active")),
+        )
+        .returning();
+      if (ended?.interpreterId != null) {
+        await db
+          .update(usersTable)
+          .set({ status: "available" })
+          .where(eq(usersTable.id, ended.interpreterId));
+      }
+      if (ended) {
+        logger.info(
+          { sessionId: row.id },
+          "swept abandoned session, freed interpreter",
+        );
+      }
+    } catch (err) {
+      logger.error({ err, sessionId: row.id }, "failed to sweep session");
+    }
+  }
+}
+
+export function startSessionSweeper(): void {
+  if (!Number.isFinite(SWEEP_INTERVAL_MS) || SWEEP_INTERVAL_MS <= 0) {
+    logger.warn("session sweeper disabled (invalid SESSION_SWEEP_INTERVAL_MS)");
+    return;
+  }
+  let running = false;
+  const timer = setInterval(() => {
+    if (running) return;
+    running = true;
+    void sweepAbandonedSessions().finally(() => {
+      running = false;
+    });
+  }, SWEEP_INTERVAL_MS);
+  // Don't keep the event loop alive solely for the sweeper.
+  timer.unref?.();
+  logger.info(
+    { intervalMs: SWEEP_INTERVAL_MS, timeoutMs: ABANDON_TIMEOUT_MS },
+    "session sweeper started",
+  );
 }
