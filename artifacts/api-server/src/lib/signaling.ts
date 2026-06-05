@@ -1,7 +1,7 @@
 import type { Server, IncomingMessage } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
-import { db, sessionsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, sessionsTable, usersTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
 import { AUTH_COOKIE, verifyToken } from "./auth";
 import { logger } from "./logger";
 
@@ -55,6 +55,31 @@ async function authorize(
 
   if (role === "user") return row.userId === uid;
   return row.interpreterId === uid;
+}
+
+// Ends a session whose peers have all disconnected without an explicit "end"
+// (e.g. a browser tab was closed mid-call) and returns the assigned interpreter
+// to "available". Guarded on status === "active" so a session that was already
+// ended normally is left untouched and the interpreter is not double-processed.
+async function endAbandonedSession(sessionId: string): Promise<void> {
+  const id = Number(sessionId);
+  if (!Number.isInteger(id)) return;
+  try {
+    const [ended] = await db
+      .update(sessionsTable)
+      .set({ status: "ended", endedAt: new Date() })
+      .where(and(eq(sessionsTable.id, id), eq(sessionsTable.status, "active")))
+      .returning();
+    if (ended?.interpreterId != null) {
+      await db
+        .update(usersTable)
+        .set({ status: "available" })
+        .where(eq(usersTable.id, ended.interpreterId));
+      logger.info({ sessionId: id }, "ended abandoned session, freed interpreter");
+    }
+  } catch (err) {
+    logger.error({ err, sessionId: id }, "failed to end abandoned session");
+  }
 }
 
 export function attachSignaling(server: Server): void {
@@ -122,6 +147,10 @@ export function attachSignaling(server: Server): void {
       }
       if (!currentRoom.user && !currentRoom.interpreter) {
         rooms.delete(sessionId);
+        // Both peers have left. If the session is still active this was an
+        // abandoned call; end it so the assigned interpreter is freed instead
+        // of remaining Busy forever.
+        void endAbandonedSession(sessionId);
       }
       logger.info({ sessionId, role }, "ws disconnected");
     });

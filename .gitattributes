@@ -1,0 +1,20 @@
+# Normalize line endings to LF in the repository to avoid CRLF noise between
+# Windows and Linux/Replit checkouts (generated files in particular).
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets — never normalize
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.svg   text eol=lf
+*.pdf   binary
+*.docx  binary
+*.woff  binary
+*.woff2 binary

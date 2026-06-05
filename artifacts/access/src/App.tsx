@@ -8,7 +8,6 @@ import { I18nProvider } from "@/contexts/i18n-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import SelectLanguage from "@/pages/select-language";
-import Connecting from "@/pages/connecting";
 import Call from "@/pages/call";
 import InterpreterDashboard from "@/pages/interpreter";
 import AdminDashboard from "@/pages/admin";
@@ -40,9 +39,6 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/select-language">
         {() => <ProtectedRoute component={SelectLanguage} allowedRoles={["user"]} />}
-      </Route>
-      <Route path="/connecting/:id">
-        {() => <ProtectedRoute component={Connecting} allowedRoles={["user"]} />}
       </Route>
       <Route path="/call/:id">
         {() => <ProtectedRoute component={Call} />}

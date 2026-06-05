@@ -4,20 +4,33 @@ import { useAuth } from "@/contexts/auth-context";
 import { useI18n } from "@/contexts/i18n-context";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogOut } from "lucide-react";
 
 export default function SelectLanguage() {
   const [, setLocation] = useLocation();
   const { logout, user } = useAuth();
   const { t, lang } = useI18n();
-  const { data: languages, isLoading } = useListLanguages();
+  const { toast } = useToast();
+  // Only show languages that have at least one interpreter assigned (coverage).
+  const { data: languages, isLoading } = useListLanguages({ assigned: true });
   const requestSession = useRequestSession();
 
   const handleLanguageSelect = (languageId: number) => {
     requestSession.mutate({ data: { languageId } }, {
       onSuccess: (session) => {
-        setLocation(`/connecting/${session.id}`);
-      }
+        // V1 direct-open: the session is created already active, so go straight
+        // to the call screen — there is no pending/connecting step anymore.
+        setLocation(`/call/${session.id}`);
+      },
+      onError: () => {
+        // Most commonly: no interpreter is available for that language right now.
+        toast({
+          title: t("connecting.noInterpreter"),
+          description: t("connecting.busyDesc"),
+          variant: "destructive",
+        });
+      },
     });
   };
 

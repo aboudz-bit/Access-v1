@@ -62,11 +62,15 @@ router.post("/sessions/request", requireAuth("user"), async (req, res) => {
       userId: user.id,
       interpreterId,
       languageId,
-      status: "pending",
+      // V1: no interpreter accept/decline step. The session opens directly as
+      // active and both parties are routed straight to the call screen.
+      status: "active",
+      startedAt: new Date(),
     })
     .returning();
 
-  res.status(201).json(await toSession(created!));
+  // Requesting user: never expose interpreter identity.
+  res.status(201).json(await toSession(created!, { includeInterpreter: false }));
 });
 
 router.get("/sessions/:id", requireAuth(), async (req, res) => {
@@ -90,62 +94,8 @@ router.get("/sessions/:id", requireAuth(), async (req, res) => {
     res.status(403).json({ message: "Forbidden" });
     return;
   }
-  res.json(await toSession(row));
-});
-
-// Interpreter accepts or declines (only their own, only while pending)
-router.post("/sessions/:id/respond", requireAuth("interpreter"), async (req, res) => {
-  const id = Number(req.params.id);
-  const me = req.user!;
-  const { action } = (req.body ?? {}) as { action?: "accept" | "decline" };
-  if (action !== "accept" && action !== "decline") {
-    res.status(400).json({ message: "Invalid action" });
-    return;
-  }
-
-  const [row] = await db
-    .select()
-    .from(sessionsTable)
-    .where(eq(sessionsTable.id, id))
-    .limit(1);
-  if (!row) {
-    res.status(404).json({ message: "Not found" });
-    return;
-  }
-  if (row.interpreterId !== me.id) {
-    res.status(403).json({ message: "Forbidden" });
-    return;
-  }
-
-  if (action === "accept") {
-    const [updated] = await db
-      .update(sessionsTable)
-      .set({ status: "active", startedAt: new Date() })
-      .where(and(eq(sessionsTable.id, id), eq(sessionsTable.status, "pending")))
-      .returning();
-    if (!updated) {
-      res.status(409).json({ message: "Session is no longer pending" });
-      return;
-    }
-    res.json(await toSession(updated));
-    return;
-  }
-
-  const [updated] = await db
-    .update(sessionsTable)
-    .set({ status: "declined", endedAt: new Date() })
-    .where(and(eq(sessionsTable.id, id), eq(sessionsTable.status, "pending")))
-    .returning();
-  if (!updated) {
-    res.status(409).json({ message: "Session is no longer pending" });
-    return;
-  }
-  // Free the interpreter again since they declined.
-  await db
-    .update(usersTable)
-    .set({ status: "available" })
-    .where(eq(usersTable.id, me.id));
-  res.json(await toSession(updated));
+  // Interpreter identity is exposed to interpreters and admins, never to users.
+  res.json(await toSession(row, { includeInterpreter: me.role !== "user" }));
 });
 
 router.post("/sessions/:id/end", requireAuth(), async (req, res) => {
@@ -185,7 +135,7 @@ router.post("/sessions/:id/end", requireAuth(), async (req, res) => {
       .set({ status: "available" })
       .where(eq(usersTable.id, row.interpreterId));
   }
-  res.json(await toSession(updated));
+  res.json(await toSession(updated, { includeInterpreter: me.role !== "user" }));
 });
 
 export default router;
