@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Access — Live Interpreter"
+version = "1.0.0"
+id = "artifacts/access"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24510
+
+[services.development]
+run = "pnpm --filter @workspace/access run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/access", "run", "build" ]
+publicDir = "artifacts/access/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24510"
+BASE_PATH = "/"

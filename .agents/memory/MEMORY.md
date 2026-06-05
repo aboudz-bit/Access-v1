@@ -1,0 +1,1 @@
+- [orval query hooks require queryKey](orval-query-options.md) — generated React Query hooks in @workspace/api-client-react need explicit queryKey at call sites or tsc fails (dev server won't catch it).

@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Access live interpreter platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: languages
+    description: Languages
+  - name: sessions
+    description: Interpreter sessions
+  - name: interpreter
+    description: Interpreter actions
+  - name: admin
+    description: Admin management
 paths:
   /healthz:
     get:
@@ -24,6 +34,368 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out the current user
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get the current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /languages:
+    get:
+      operationId: listLanguages
+      tags: [languages]
+      summary: List all supported languages
+      responses:
+        "200":
+          description: Languages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Language"
+
+  /sessions/request:
+    post:
+      operationId: requestSession
+      tags: [sessions]
+      summary: User requests an interpreter for a language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionRequestBody"
+      responses:
+        "201":
+          description: Session created in pending state, request sent to interpreter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: No available interpreter for that language
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get a session by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/{id}/respond:
+    post:
+      operationId: respondToSession
+      tags: [sessions]
+      summary: Interpreter accepts or declines a pending session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondBody"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}/end:
+    post:
+      operationId: endSession
+      tags: [sessions]
+      summary: End an active session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ended session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /interpreter/status:
+    put:
+      operationId: updateInterpreterStatus
+      tags: [interpreter]
+      summary: Interpreter sets their own availability status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterpreterStatusBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterpreterProfile"
+
+  /interpreter/me:
+    get:
+      operationId: getInterpreterProfile
+      tags: [interpreter]
+      summary: Get the current interpreter profile (status + languages)
+      responses:
+        "200":
+          description: Interpreter profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterpreterProfile"
+
+  /interpreter/sessions:
+    get:
+      operationId: listInterpreterSessions
+      tags: [interpreter]
+      summary: List the current interpreter's session history
+      responses:
+        "200":
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Dashboard summary counts
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List all end users
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [admin]
+      summary: Create an end user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/interpreters:
+    get:
+      operationId: listInterpreters
+      tags: [admin]
+      summary: List all interpreters with languages and status
+      responses:
+        "200":
+          description: Interpreters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Interpreter"
+    post:
+      operationId: createInterpreter
+      tags: [admin]
+      summary: Create an interpreter and assign languages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterpreterInput"
+      responses:
+        "201":
+          description: Created interpreter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interpreter"
+
+  /admin/interpreters/{id}/status:
+    put:
+      operationId: setInterpreterStatus
+      tags: [admin]
+      summary: Admin sets an interpreter's availability status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterpreterStatusBody"
+      responses:
+        "200":
+          description: Updated interpreter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interpreter"
+
+  /admin/interpreters/{id}/languages:
+    put:
+      operationId: setInterpreterLanguages
+      tags: [admin]
+      summary: Admin assigns languages to an interpreter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetLanguagesBody"
+      responses:
+        "200":
+          description: Updated interpreter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interpreter"
+
+  /admin/sessions:
+    get:
+      operationId: listAdminSessions
+      tags: [admin]
+      summary: List all sessions, optionally filtered by status
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SessionStatus"
+      responses:
+        "200":
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +406,204 @@ components:
       required:
         - status
 
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    Role:
+      type: string
+      enum: [admin, user, interpreter]
+
+    InterpreterStatus:
+      type: string
+      enum: [available, busy, offline]
+
+    SessionStatus:
+      type: string
+      enum: [pending, active, ended, declined]
+
+    RespondAction:
+      type: string
+      enum: [accept, decline]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+      required: [id, email, name, role]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    Language:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        nameAr:
+          type: string
+        flagEmoji:
+          type: string
+      required: [id, code, name, nameAr, flagEmoji]
+
+    InterpreterProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        status:
+          $ref: "#/components/schemas/InterpreterStatus"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
+      required: [id, name, email, status, languages]
+
+    Interpreter:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        status:
+          $ref: "#/components/schemas/InterpreterStatus"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
+      required: [id, name, email, status, languages]
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        interpreterId:
+          type: [integer, "null"]
+        interpreterName:
+          type: [string, "null"]
+        languageId:
+          type: integer
+        language:
+          $ref: "#/components/schemas/Language"
+        status:
+          $ref: "#/components/schemas/SessionStatus"
+        createdAt:
+          type: string
+        startedAt:
+          type: [string, "null"]
+        endedAt:
+          type: [string, "null"]
+      required: [id, userId, userName, languageId, language, status, createdAt]
+
+    SessionRequestBody:
+      type: object
+      properties:
+        languageId:
+          type: integer
+      required: [languageId]
+
+    RespondBody:
+      type: object
+      properties:
+        action:
+          $ref: "#/components/schemas/RespondAction"
+      required: [action]
+
+    InterpreterStatusBody:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/InterpreterStatus"
+      required: [status]
+
+    UserInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required: [name, email, password]
+
+    InterpreterInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        languageIds:
+          type: array
+          items:
+            type: integer
+      required: [name, email, password, languageIds]
+
+    SetLanguagesBody:
+      type: object
+      properties:
+        languageIds:
+          type: array
+          items:
+            type: integer
+      required: [languageIds]
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalInterpreters:
+          type: integer
+        availableInterpreters:
+          type: integer
+        activeSessions:
+          type: integer
+        completedSessions:
+          type: integer
+      required: [totalUsers, totalInterpreters, availableInterpreters, activeSessions, completedSessions]
