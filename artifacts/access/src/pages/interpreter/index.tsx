@@ -1,10 +1,11 @@
-import { useGetInterpreterProfile, useUpdateInterpreterStatus, useListInterpreterSessions, useRespondToSession, getListInterpreterSessionsQueryKey } from "@workspace/api-client-react";
+import { useEffect } from "react";
+import { useGetInterpreterProfile, useUpdateInterpreterStatus, useListInterpreterSessions, getListInterpreterSessionsQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useI18n } from "@/contexts/i18n-context";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { LogOut, Check, X, Clock, Video } from "lucide-react";
+import { LogOut, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -16,30 +17,32 @@ export default function InterpreterDashboard() {
 
   const { data: profile } = useGetInterpreterProfile();
   const updateStatus = useUpdateInterpreterStatus();
-  const respondSession = useRespondToSession();
 
-  const { data: sessions } = useListInterpreterSessions({
+  const { data: sessions, isFetching } = useListInterpreterSessions({
     query: {
       queryKey: getListInterpreterSessionsQueryKey(),
       refetchInterval: 2000,
+      // Keep polling even when the interpreter's tab is in the background so a
+      // newly assigned session still auto-routes them into the call.
+      refetchIntervalInBackground: true,
     }
   });
 
-  const pendingSession = sessions?.find(s => s.status === "pending");
-  const pastSessions = sessions?.filter(s => s.status !== "pending") || [];
+  // V1: no manual accept/decline. When the system assigns the interpreter to a
+  // session it is created already active, so route straight into the call.
+  const activeSession = sessions?.find(s => s.status === "active");
+  const pastSessions = sessions?.filter(s => s.status === "ended" || s.status === "declined") || [];
+
+  // Gate on `!isFetching` so a just-ended session served from a stale cache
+  // (right after returning from a call) does not bounce us back into the call.
+  useEffect(() => {
+    if (activeSession && !isFetching) {
+      setLocation(`/call/${activeSession.id}`);
+    }
+  }, [activeSession?.id, isFetching, setLocation]);
 
   const handleStatusToggle = (checked: boolean) => {
     updateStatus.mutate({ data: { status: checked ? "available" : "offline" } });
-  };
-
-  const handleRespond = (id: number, action: "accept" | "decline") => {
-    respondSession.mutate({ id, data: { action } }, {
-      onSuccess: (session) => {
-        if (action === "accept") {
-          setLocation(`/call/${session.id}`);
-        }
-      }
-    });
   };
 
   return (
@@ -71,44 +74,6 @@ export default function InterpreterDashboard() {
       </header>
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full flex flex-col gap-6">
-        {pendingSession && (
-          <div className="bg-primary/10 border-2 border-primary/20 rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-full h-1 bg-primary animate-pulse" />
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-card rounded-2xl shadow-sm border border-border flex items-center justify-center text-4xl">
-                  {pendingSession.language.flagEmoji}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-1">{t("interpreter.newRequest")}</h2>
-                  <p className="text-muted-foreground text-lg">{t("interpreter.fromPrefix")} {pendingSession.userName} • {t("connecting.languagePrefix")} {lang === "ar" ? pendingSession.language.nameAr : pendingSession.language.name}</p>
-                </div>
-              </div>
-              <div className="flex gap-3 w-full md:w-auto">
-                <Button 
-                  variant="destructive" 
-                  size="lg" 
-                  className="flex-1 md:w-32 h-14 rounded-xl"
-                  onClick={() => handleRespond(pendingSession.id, "decline")}
-                  disabled={respondSession.isPending}
-                >
-                  <X className="w-5 h-5 ml-2" />
-                  {t("common.decline")}
-                </Button>
-                <Button 
-                  size="lg" 
-                  className="flex-1 md:w-32 h-14 rounded-xl bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => handleRespond(pendingSession.id, "accept")}
-                  disabled={respondSession.isPending}
-                >
-                  <Check className="w-5 h-5 ml-2" />
-                  {t("common.accept")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Profile Sidebar */}
           <div className="md:col-span-1 space-y-6">

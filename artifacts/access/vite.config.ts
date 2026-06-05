@@ -63,6 +63,18 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    // Local development only: on Replit the application router fronts both the
+    // frontend and the API, so relative `/api` requests resolve automatically.
+    // Off-Replit (e.g. local Windows dev) there is no such router, so we proxy
+    // `/api` (REST) and `/api/ws` (WebRTC signaling) to the local API server.
+    // Override the target with API_PROXY_TARGET if the API runs elsewhere.
+    proxy: {
+      "/api": {
+        target: process.env.API_PROXY_TARGET ?? "http://localhost:8080",
+        changeOrigin: true,
+        ws: true,
+      },
+    },
     fs: {
       strict: true,
     },

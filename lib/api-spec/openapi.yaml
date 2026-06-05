@@ -96,7 +96,17 @@ paths:
     get:
       operationId: listLanguages
       tags: [languages]
-      summary: List all supported languages
+      summary: List supported languages
+      parameters:
+        - name: assigned
+          in: query
+          required: false
+          description: >-
+            When true, only return languages that have at least one interpreter
+            assigned to them (coverage), regardless of current availability.
+            Used by the user-facing language picker.
+          schema:
+            type: boolean
       responses:
         "200":
           description: Languages
@@ -156,31 +166,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
-  /sessions/{id}/respond:
-    post:
-      operationId: respondToSession
-      tags: [sessions]
-      summary: Interpreter accepts or declines a pending session
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RespondBody"
-      responses:
-        "200":
-          description: Updated session
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Session"
 
   /sessions/{id}/end:
     post:
@@ -483,10 +468,6 @@ components:
       type: string
       enum: [pending, active, ended, declined]
 
-    RespondAction:
-      type: string
-      enum: [accept, decline]
-
     User:
       type: object
       properties:
@@ -613,13 +594,6 @@ components:
         languageId:
           type: integer
       required: [languageId]
-
-    RespondBody:
-      type: object
-      properties:
-        action:
-          $ref: "#/components/schemas/RespondAction"
-      required: [action]
 
     InterpreterStatusBody:
       type: object

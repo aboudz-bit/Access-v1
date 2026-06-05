@@ -282,7 +282,7 @@ router.get("/admin/sessions", requireAuth("admin"), async (req, res) => {
         .where(eq(sessionsTable.status, status))
         .orderBy(desc(sessionsTable.createdAt))
     : await db.select().from(sessionsTable).orderBy(desc(sessionsTable.createdAt));
-  res.json(await Promise.all(rows.map(toSession)));
+  res.json(await Promise.all(rows.map((r) => toSession(r))));
 });
 
 export default router;

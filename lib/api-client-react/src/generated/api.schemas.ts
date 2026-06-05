@@ -41,14 +41,6 @@ export const SessionStatus = {
   declined: 'declined',
 } as const;
 
-export type RespondAction = typeof RespondAction[keyof typeof RespondAction];
-
-
-export const RespondAction = {
-  accept: 'accept',
-  decline: 'decline',
-} as const;
-
 export interface User {
   id: number;
   email: string;
@@ -119,10 +111,6 @@ export interface SessionRequestBody {
   languageId: number;
 }
 
-export interface RespondBody {
-  action: RespondAction;
-}
-
 export interface InterpreterStatusBody {
   status: InterpreterStatus;
 }
@@ -151,6 +139,13 @@ export interface AdminStats {
   activeSessions: number;
   completedSessions: number;
 }
+
+export type ListLanguagesParams = {
+/**
+ * When true, only return languages that have at least one interpreter assigned to them (coverage), regardless of current availability. Used by the user-facing language picker.
+ */
+assigned?: boolean;
+};
 
 export type ListAdminSessionsParams = {
 status?: SessionStatus;

@@ -56,8 +56,12 @@ export const GetMeResponse = zod.object({
 
 
 /**
- * @summary List all supported languages
+ * @summary List supported languages
  */
+export const ListLanguagesQueryParams = zod.object({
+  "assigned": zod.coerce.boolean().optional().describe('When true, only return languages that have at least one interpreter assigned to them (coverage), regardless of current availability. Used by the user-facing language picker.')
+})
+
 export const ListLanguagesResponseItem = zod.object({
   "id": zod.number(),
   "code": zod.string(),
@@ -84,38 +88,6 @@ export const GetSessionParams = zod.object({
 })
 
 export const GetSessionResponse = zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "userName": zod.string(),
-  "interpreterId": zod.number().nullish(),
-  "interpreterName": zod.string().nullish(),
-  "languageId": zod.number(),
-  "language": zod.object({
-  "id": zod.number(),
-  "code": zod.string(),
-  "name": zod.string(),
-  "nameAr": zod.string(),
-  "flagEmoji": zod.string()
-}),
-  "status": zod.enum(['pending', 'active', 'ended', 'declined']),
-  "createdAt": zod.string(),
-  "startedAt": zod.string().nullish(),
-  "endedAt": zod.string().nullish()
-})
-
-
-/**
- * @summary Interpreter accepts or declines a pending session
- */
-export const RespondToSessionParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const RespondToSessionBody = zod.object({
-  "action": zod.enum(['accept', 'decline'])
-})
-
-export const RespondToSessionResponse = zod.object({
   "id": zod.number(),
   "userId": zod.number(),
   "userName": zod.string(),

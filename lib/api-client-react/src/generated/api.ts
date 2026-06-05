@@ -31,8 +31,8 @@ import type {
   Language,
   LanguageInput,
   ListAdminSessionsParams,
+  ListLanguagesParams,
   LoginRequest,
-  RespondBody,
   Session,
   SessionRequestBody,
   SetLanguagesBody,
@@ -348,20 +348,27 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
 
 
 
-export const getListLanguagesUrl = () => {
+export const getListLanguagesUrl = (params?: ListLanguagesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/languages`
+  return stringifiedParams.length > 0 ? `/api/languages?${stringifiedParams}` : `/api/languages`
 }
 
 /**
- * @summary List all supported languages
+ * @summary List supported languages
  */
-export const listLanguages = async ( options?: RequestInit): Promise<Language[]> => {
+export const listLanguages = async (params?: ListLanguagesParams, options?: RequestInit): Promise<Language[]> => {
 
-  return customFetch<Language[]>(getListLanguagesUrl(),
+  return customFetch<Language[]>(getListLanguagesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -374,23 +381,23 @@ export const listLanguages = async ( options?: RequestInit): Promise<Language[]>
 
 
 
-export const getListLanguagesQueryKey = () => {
+export const getListLanguagesQueryKey = (params?: ListLanguagesParams,) => {
     return [
-    `/api/languages`
+    `/api/languages`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListLanguagesQueryOptions = <TData = Awaited<ReturnType<typeof listLanguages>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLanguages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListLanguagesQueryOptions = <TData = Awaited<ReturnType<typeof listLanguages>>, TError = ErrorType<unknown>>(params?: ListLanguagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLanguages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListLanguagesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListLanguagesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLanguages>>> = ({ signal }) => listLanguages({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLanguages>>> = ({ signal }) => listLanguages(params, { signal, ...requestOptions });
 
 
 
@@ -404,15 +411,15 @@ export type ListLanguagesQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List all supported languages
+ * @summary List supported languages
  */
 
 export function useListLanguages<TData = Awaited<ReturnType<typeof listLanguages>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLanguages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListLanguagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLanguages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListLanguagesQueryOptions(options)
+  const queryOptions = getListLanguagesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -572,78 +579,6 @@ export function useGetSession<TData = Awaited<ReturnType<typeof getSession>>, TE
 
 
 
-
-export const getRespondToSessionUrl = (id: number,) => {
-
-
-
-
-  return `/api/sessions/${id}/respond`
-}
-
-/**
- * @summary Interpreter accepts or declines a pending session
- */
-export const respondToSession = async (id: number,
-    respondBody: RespondBody, options?: RequestInit): Promise<Session> => {
-
-  return customFetch<Session>(getRespondToSessionUrl(id),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      respondBody,)
-  }
-);}
-
-
-
-
-export const getRespondToSessionMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToSession>>, TError,{id: number;data: BodyType<RespondBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof respondToSession>>, TError,{id: number;data: BodyType<RespondBody>}, TContext> => {
-
-const mutationKey = ['respondToSession'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof respondToSession>>, {id: number;data: BodyType<RespondBody>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  respondToSession(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RespondToSessionMutationResult = NonNullable<Awaited<ReturnType<typeof respondToSession>>>
-    export type RespondToSessionMutationBody = BodyType<RespondBody>
-    export type RespondToSessionMutationError = ErrorType<unknown>
-
-    /**
- * @summary Interpreter accepts or declines a pending session
- */
-export const useRespondToSession = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToSession>>, TError,{id: number;data: BodyType<RespondBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof respondToSession>>,
-        TError,
-        {id: number;data: BodyType<RespondBody>},
-        TContext
-      > => {
-      return useMutation(getRespondToSessionMutationOptions(options));
-    }
 
 export const getEndSessionUrl = (id: number,) => {
 

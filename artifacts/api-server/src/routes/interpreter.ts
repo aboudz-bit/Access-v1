@@ -44,7 +44,7 @@ router.get("/interpreter/sessions", requireAuth("interpreter"), async (req, res)
     .from(sessionsTable)
     .where(eq(sessionsTable.interpreterId, req.user!.id))
     .orderBy(desc(sessionsTable.createdAt));
-  res.json(await Promise.all(rows.map(toSession)));
+  res.json(await Promise.all(rows.map((r) => toSession(r))));
 });
 
 export default router;

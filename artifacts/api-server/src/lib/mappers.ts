@@ -35,12 +35,42 @@ export async function languagesForInterpreter(interpreterId: number) {
   return rows.map((r) => toLanguage(r.lang));
 }
 
-export async function toSession(row: SessionRow) {
+export async function toSession(
+  row: SessionRow,
+  opts: { includeInterpreter?: boolean } = {},
+) {
+  // Privacy: the user-facing session payload must NOT expose interpreter
+  // identity (id/name). Callers serving an end user pass
+  // `includeInterpreter: false`; interpreter/admin views keep it (default).
+  const includeInterpreter = opts.includeInterpreter ?? true;
+
   const [user] = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.id, row.userId))
     .limit(1);
+
+  const [lang] = await db
+    .select()
+    .from(languagesTable)
+    .where(eq(languagesTable.id, row.languageId))
+    .limit(1);
+
+  const base = {
+    id: row.id,
+    userId: row.userId,
+    userName: user?.name ?? "",
+    languageId: row.languageId,
+    language: lang ? toLanguage(lang) : null,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    startedAt: row.startedAt ? row.startedAt.toISOString() : null,
+    endedAt: row.endedAt ? row.endedAt.toISOString() : null,
+  };
+
+  if (!includeInterpreter) {
+    return base;
+  }
 
   let interpreterName: string | null = null;
   if (row.interpreterId != null) {
@@ -52,24 +82,10 @@ export async function toSession(row: SessionRow) {
     interpreterName = interp?.name ?? null;
   }
 
-  const [lang] = await db
-    .select()
-    .from(languagesTable)
-    .where(eq(languagesTable.id, row.languageId))
-    .limit(1);
-
   return {
-    id: row.id,
-    userId: row.userId,
-    userName: user?.name ?? "",
+    ...base,
     interpreterId: row.interpreterId,
     interpreterName,
-    languageId: row.languageId,
-    language: lang ? toLanguage(lang) : null,
-    status: row.status,
-    createdAt: row.createdAt.toISOString(),
-    startedAt: row.startedAt ? row.startedAt.toISOString() : null,
-    endedAt: row.endedAt ? row.endedAt.toISOString() : null,
   };
 }
 
