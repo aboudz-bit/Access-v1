@@ -18,10 +18,15 @@ export function Flag({
   emoji,
   className,
   title,
+  square,
 }: {
   emoji: string;
   className?: string;
   title?: string;
+  // When true, render the 1:1 square flag variant (flag-icons `fis`), which is
+  // what a circular flag container needs so the flag fills the circle instead
+  // of being letter-boxed.
+  square?: boolean;
 }) {
   const code = emojiToCountryCode(emoji);
 
@@ -32,7 +37,7 @@ export function Flag({
 
   return (
     <span
-      className={`fi fi-${code} rounded-[2px] align-middle ${className ?? ""}`}
+      className={`fi ${square ? "fis " : ""}fi-${code} rounded-[2px] align-middle ${className ?? ""}`}
       role="img"
       aria-label={title ?? code}
       title={title}
