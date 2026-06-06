@@ -29,6 +29,10 @@ const translations: Record<Lang, TranslationDict> = {
     "login.submit": "تسجيل الدخول",
     "login.invalidEmail": "البريد الإلكتروني غير صالح",
     "login.passwordRequired": "كلمة المرور مطلوبة",
+    "login.rememberMe": "تذكرني",
+    "login.showPassword": "إظهار كلمة المرور",
+    "login.hidePassword": "إخفاء كلمة المرور",
+    "login.loading": "جاري تسجيل الدخول...",
 
     "selectLanguage.welcome": "مرحباً",
     "selectLanguage.subtitle": "اختر لغة الترجمة للبدء",
@@ -132,6 +136,10 @@ const translations: Record<Lang, TranslationDict> = {
     "login.submit": "Log In",
     "login.invalidEmail": "Invalid email address",
     "login.passwordRequired": "Password is required",
+    "login.rememberMe": "Remember Me",
+    "login.showPassword": "Show password",
+    "login.hidePassword": "Hide password",
+    "login.loading": "Logging in...",
 
     "selectLanguage.welcome": "Welcome",
     "selectLanguage.subtitle": "Choose an interpretation language to start",
