@@ -23,7 +23,7 @@ const translations: Record<Lang, TranslationDict> = {
     "common.all": "الكل",
     "common.loading": "جاري التحميل...",
 
-    "login.tagline": "أكسس - للترجمة الفورية بلغة الإشارة",
+    "login.tagline": "منصة الترجمة الفورية متعددة اللغات",
     "login.errorTitle": "خطأ في تسجيل الدخول",
     "login.errorDesc": "تأكد من البريد الإلكتروني وكلمة المرور",
     "login.submit": "تسجيل الدخول",
