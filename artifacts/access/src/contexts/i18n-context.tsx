@@ -35,7 +35,12 @@ const translations: Record<Lang, TranslationDict> = {
     "login.loading": "جاري تسجيل الدخول...",
 
     "selectLanguage.welcome": "مرحباً",
-    "selectLanguage.subtitle": "اختر لغة الترجمة للبدء",
+    "selectLanguage.title": "اختر لغة الترجمة",
+    "selectLanguage.subtitle": "قم باختيار لغة للترجمة الفورية المباشرة",
+    "selectLanguage.searching": "جاري البحث عن مترجم متاح...",
+    "selectLanguage.unavailable": "غير متاح حالياً",
+    "common.logout": "تسجيل الخروج",
+    "common.menu": "القائمة",
 
     "connecting.noInterpreter": "عذراً، لا يوجد مترجم متاح حالياً",
     "connecting.busyDesc": "جميع المترجمين منشغلون في الوقت الحالي. يرجى المحاولة مرة أخرى بعد قليل.",
@@ -142,7 +147,12 @@ const translations: Record<Lang, TranslationDict> = {
     "login.loading": "Logging in...",
 
     "selectLanguage.welcome": "Welcome",
-    "selectLanguage.subtitle": "Choose an interpretation language to start",
+    "selectLanguage.title": "Choose Translation Language",
+    "selectLanguage.subtitle": "Select a language for live interpretation",
+    "selectLanguage.searching": "Searching for an available interpreter...",
+    "selectLanguage.unavailable": "Currently unavailable",
+    "common.logout": "Log out",
+    "common.menu": "Menu",
 
     "connecting.noInterpreter": "Sorry, no interpreter is available right now",
     "connecting.busyDesc": "All interpreters are currently busy. Please try again shortly.",
