@@ -3,6 +3,14 @@ import { db, sessionsTable, usersTable, interpreterLanguagesTable } from "@works
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { toSession } from "../lib/mappers";
+import { logger } from "../lib/logger";
+import {
+  resolveProvider,
+  zoomRequestedButUnconfigured,
+  newVideoSessionName,
+  buildVideoTokenResponse,
+  zoomConfig,
+} from "../lib/video";
 
 const router: IRouter = Router();
 
@@ -56,6 +64,18 @@ router.post("/sessions/request", requireAuth("user"), async (req, res) => {
     return;
   }
 
+  // Decide the media transport once, at creation, and store it so both
+  // participants always join the same engine. Defaults to 'webrtc' unless
+  // VIDEO_PROVIDER=zoom is set with valid Zoom credentials. If zoom was
+  // requested but is unconfigured, resolveProvider() degrades to webrtc; we log
+  // that so the misconfiguration is visible.
+  if (zoomRequestedButUnconfigured()) {
+    logger.warn(
+      "VIDEO_PROVIDER=zoom requested but ZOOM_SDK_KEY/ZOOM_SDK_SECRET missing; falling back to webrtc",
+    );
+  }
+  const videoProvider = resolveProvider();
+
   const [created] = await db
     .insert(sessionsTable)
     .values({
@@ -66,6 +86,9 @@ router.post("/sessions/request", requireAuth("user"), async (req, res) => {
       // active and both parties are routed straight to the call screen.
       status: "active",
       startedAt: new Date(),
+      videoProvider,
+      // Opaque Zoom topic, provisioned up front so a later switch can reuse it.
+      videoSessionName: newVideoSessionName(),
     })
     .returning();
 
@@ -96,6 +119,42 @@ router.get("/sessions/:id", requireAuth(), async (req, res) => {
   }
   // Interpreter identity is exposed to interpreters and admins, never to users.
   res.json(await toSession(row, { includeInterpreter: me.role !== "user" }));
+});
+
+// Mint a per-session video join credential. For a 'zoom' session this returns a
+// short-lived Zoom Video SDK JWT (signed server-side; the SDK secret never
+// leaves the backend). For a 'webrtc' session it returns a provider marker and
+// null Zoom fields — the client then uses the existing /api/ws signaling path.
+//
+// Authorization is participant-only (the session's user or its interpreter);
+// admins are not call participants and receive 403. The session must be active.
+router.post("/sessions/:id/video-token", requireAuth(), async (req, res) => {
+  const id = Number(req.params.id);
+  const me = req.user!;
+  if (!Number.isInteger(id)) {
+    res.status(404).json({ message: "Not found" });
+    return;
+  }
+  const [row] = await db
+    .select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, id))
+    .limit(1);
+  if (!row) {
+    res.status(404).json({ message: "Not found" });
+    return;
+  }
+
+  const result = buildVideoTokenResponse({
+    session: row,
+    user: me,
+    zoom: zoomConfig(),
+  });
+  if (!result.ok) {
+    res.status(result.status).json({ message: result.message });
+    return;
+  }
+  res.json(result.body);
 });
 
 router.post("/sessions/:id/end", requireAuth(), async (req, res) => {

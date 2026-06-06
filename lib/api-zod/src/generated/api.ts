@@ -102,10 +102,30 @@ export const GetSessionResponse = zod.object({
   "flagEmoji": zod.string()
 }),
   "status": zod.enum(['pending', 'active', 'ended', 'declined']),
+  "videoProvider": zod.enum(['zoom', 'webrtc']),
   "createdAt": zod.string(),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish()
 })
+
+
+/**
+ * Returns the media-join credential for the session's provider. For a 'zoom' session this is a short-lived Zoom Video SDK JWT (signed server-side; the SDK secret never leaves the backend). For a 'webrtc' session the Zoom fields are null and the client uses the built-in signaling path. Participant-only (the session's user or interpreter); the session must be active.
+ * @summary Get a video join credential for a session
+ */
+export const GetVideoTokenParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetVideoTokenResponse = zod.object({
+  "provider": zod.enum(['zoom', 'webrtc']),
+  "token": zod.string().nullish().describe('Zoom Video SDK JWT (zoom only; null for webrtc).'),
+  "sessionName": zod.string().nullish().describe('Opaque Zoom Video SDK topic (zoom only). Never a meeting link.'),
+  "sdkKey": zod.string().nullish().describe('Zoom Video SDK key (public; zoom only).'),
+  "role": zod.number().nullish().describe('Zoom role_type — 1 host (interpreter), 0 participant (user).'),
+  "userIdentity": zod.string().nullish().describe('Privacy-safe caller identity (role + id; never a name\/email).'),
+  "expiresIn": zod.number().nullish().describe('Token lifetime in seconds (zoom only).')
+}).describe('Per-session media join credential. Zoom fields are populated only for \'zoom\' sessions; for \'webrtc\' they are null.')
 
 
 /**
@@ -130,6 +150,7 @@ export const EndSessionResponse = zod.object({
   "flagEmoji": zod.string()
 }),
   "status": zod.enum(['pending', 'active', 'ended', 'declined']),
+  "videoProvider": zod.enum(['zoom', 'webrtc']),
   "createdAt": zod.string(),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish()
@@ -194,6 +215,7 @@ export const ListInterpreterSessionsResponseItem = zod.object({
   "flagEmoji": zod.string()
 }),
   "status": zod.enum(['pending', 'active', 'ended', 'declined']),
+  "videoProvider": zod.enum(['zoom', 'webrtc']),
   "createdAt": zod.string(),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish()
@@ -381,6 +403,7 @@ export const ListAdminSessionsResponseItem = zod.object({
   "flagEmoji": zod.string()
 }),
   "status": zod.enum(['pending', 'active', 'ended', 'declined']),
+  "videoProvider": zod.enum(['zoom', 'webrtc']),
   "createdAt": zod.string(),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish()

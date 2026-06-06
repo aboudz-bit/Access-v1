@@ -27,3 +27,5 @@ export * from './sessionStatus';
 export * from './setLanguagesBody';
 export * from './user';
 export * from './userInput';
+export * from './videoProvider';
+export * from './videoToken';

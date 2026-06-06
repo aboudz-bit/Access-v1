@@ -37,7 +37,8 @@ import type {
   SessionRequestBody,
   SetLanguagesBody,
   User,
-  UserInput
+  UserInput,
+  VideoToken
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -579,6 +580,77 @@ export function useGetSession<TData = Awaited<ReturnType<typeof getSession>>, TE
 
 
 
+
+export const getGetVideoTokenUrl = (id: number,) => {
+
+
+
+
+  return `/api/sessions/${id}/video-token`
+}
+
+/**
+ * Returns the media-join credential for the session's provider. For a 'zoom' session this is a short-lived Zoom Video SDK JWT (signed server-side; the SDK secret never leaves the backend). For a 'webrtc' session the Zoom fields are null and the client uses the built-in signaling path. Participant-only (the session's user or interpreter); the session must be active.
+ * @summary Get a video join credential for a session
+ */
+export const getVideoToken = async (id: number, options?: RequestInit): Promise<VideoToken> => {
+
+  return customFetch<VideoToken>(getGetVideoTokenUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGetVideoTokenMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getVideoToken>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof getVideoToken>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['getVideoToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getVideoToken>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  getVideoToken(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GetVideoTokenMutationResult = NonNullable<Awaited<ReturnType<typeof getVideoToken>>>
+
+    export type GetVideoTokenMutationError = ErrorType<Error>
+
+    /**
+ * @summary Get a video join credential for a session
+ */
+export const useGetVideoToken = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getVideoToken>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof getVideoToken>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getGetVideoTokenMutationOptions(options));
+    }
 
 export const getEndSessionUrl = (id: number,) => {
 

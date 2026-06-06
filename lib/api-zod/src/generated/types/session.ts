@@ -7,6 +7,7 @@
  */
 import type { Language } from './language';
 import type { SessionStatus } from './sessionStatus';
+import type { VideoProvider } from './videoProvider';
 
 export interface Session {
   id: number;
@@ -19,6 +20,7 @@ export interface Session {
   languageId: number;
   language: Language;
   status: SessionStatus;
+  videoProvider: VideoProvider;
   createdAt: string;
   /** @nullable */
   startedAt?: string | null;

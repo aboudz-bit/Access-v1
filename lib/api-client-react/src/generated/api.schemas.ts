@@ -41,6 +41,14 @@ export const SessionStatus = {
   declined: 'declined',
 } as const;
 
+export type VideoProvider = typeof VideoProvider[keyof typeof VideoProvider];
+
+
+export const VideoProvider = {
+  zoom: 'zoom',
+  webrtc: 'webrtc',
+} as const;
+
 export interface User {
   id: number;
   email: string;
@@ -100,11 +108,49 @@ export interface Session {
   languageId: number;
   language: Language;
   status: SessionStatus;
+  videoProvider: VideoProvider;
   createdAt: string;
   /** @nullable */
   startedAt?: string | null;
   /** @nullable */
   endedAt?: string | null;
+}
+
+/**
+ * Per-session media join credential. Zoom fields are populated only for 'zoom' sessions; for 'webrtc' they are null.
+ */
+export interface VideoToken {
+  provider: VideoProvider;
+  /**
+     * Zoom Video SDK JWT (zoom only; null for webrtc).
+     * @nullable
+     */
+  token?: string | null;
+  /**
+     * Opaque Zoom Video SDK topic (zoom only). Never a meeting link.
+     * @nullable
+     */
+  sessionName?: string | null;
+  /**
+     * Zoom Video SDK key (public; zoom only).
+     * @nullable
+     */
+  sdkKey?: string | null;
+  /**
+     * Zoom role_type — 1 host (interpreter), 0 participant (user).
+     * @nullable
+     */
+  role?: number | null;
+  /**
+     * Privacy-safe caller identity (role + id; never a name/email).
+     * @nullable
+     */
+  userIdentity?: string | null;
+  /**
+     * Token lifetime in seconds (zoom only).
+     * @nullable
+     */
+  expiresIn?: number | null;
 }
 
 export interface SessionRequestBody {

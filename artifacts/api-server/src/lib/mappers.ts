@@ -63,6 +63,7 @@ export async function toSession(
     languageId: row.languageId,
     language: lang ? toLanguage(lang) : null,
     status: row.status,
+    videoProvider: row.videoProvider,
     createdAt: row.createdAt.toISOString(),
     startedAt: row.startedAt ? row.startedAt.toISOString() : null,
     endedAt: row.endedAt ? row.endedAt.toISOString() : null,
