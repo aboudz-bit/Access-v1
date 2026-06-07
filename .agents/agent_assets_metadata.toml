@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "nCoelSOq5cS-RPqUgglzl"
+uri = "file://artifacts/access/docs/assets/access-moodboard.png"
+type = "image"
+title = "access design moodboard"
